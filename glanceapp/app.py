@@ -16,10 +16,10 @@ from PySide2 import QtCore
 
 
 class Config():
-    username = 'admin'
-    password = 'admin'
-    entry_point = 'http://34.236.238.212:5050/glance/v2/items'
-    storage_url = 'https://s3.amazonaws.com/vhdevglancestore/'
+    username = ''
+    password = ''
+    entry_point = ''
+    storage_url = ''
 
 
 class GlanceLib():
