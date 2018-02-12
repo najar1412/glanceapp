@@ -24,31 +24,17 @@ from PySide2 import QtCore
 
 class Config():
     def __init__(self):
-        self.username = 'admin'
-        self.password = 'admin'
-        self.entry_point = 'http://34.236.238.212:5050/glance/v2/items'
-        self.storage_url = 'https://s3.amazonaws.com/vhdevglancestore/'
-    
+        self.username = None
+        self.password = None
+        self.entry_point = None
+        self.storage_url = None
+
     def validate(self):
         if self.username:
             return True
         else:
             return False
-"""
 
-class Config():
-    def __init__(self):
-        self.username = None
-        self.password = None
-        self.entry_point = None
-        self.storage_url = None
-    
-    def validate(self):
-        if self.username != None:
-            return True
-        else:
-            return False
-"""
 
 class WidgetBuilder():
     def __init__(self, context):
@@ -62,16 +48,15 @@ class WidgetBuilder():
         image = QtGui.QImage()
         image.loadFromData(data)
 
-        thumbnail_widget = QtWidgets.QWidget()
+        # thumbnail_widget = QtWidgets.QWidget()
         
         lbl = QtWidgets.QLabel()
         lbl.setPixmap(QtGui.QPixmap(image))
         
-        thumbnail_widget.addWidget(lbl)
-        # lbltext = QtWidgets.QLabel()
+        self.context.addWidget(lbl)
 
         if column == 0:
-            self.context.addWidget(thumbnail_widget)
+            self.context.addWidget(lbl)
             self.context
 
         else:
@@ -108,7 +93,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _window_globals(self):
         self.setWindowTitle('glanceapp 0.01')
-        self.setFixedWidth(400)
+        self.setFixedWidth(450)
 
 
     def config_invalid_window(self):
@@ -140,21 +125,22 @@ class MainWindow(QtWidgets.QMainWindow):
         self._window_globals()
         self._window_component_menubar()
         widget_root = QtWidgets.QWidget(self)
-        
+
         self.setCentralWidget(widget_root)
 
         # Layout Components
         self.layout_container = QtWidgets.QVBoxLayout()
         self.layout_component_query = QtWidgets.QGridLayout()
-        self.layout_component_query_results = QtWidgets.QGridLayout()
-        
+        self.layout_component_query_results = QtWidgets.QVBoxLayout()
+        self.layout_component_query_results.addWidget(QueryResults())
+
         self.layout_container.addLayout(self.layout_component_query)
         self.layout_container.addLayout(self.layout_component_query_results)
         widget_root.setLayout(self.layout_container)
-        
+
         # layout content
         self._widget_group_query(self.layout_component_query)
-        self._widget_group_query_results()
+        # self._widget_group_query_results()
 
 
     def _window_component_menubar(self):
@@ -195,28 +181,94 @@ class MainWindow(QtWidgets.QMainWindow):
 
                     else:
                         WidgetBuilder(self.layout_component_query_results).thumbnail(item['item_thumb'], column=0)
-                    
+
                     count += 1
-        
+
         else:
             for index, _ in enumerate(range(8)):
                 if index % 2 == 0:
                     WidgetBuilder(self.layout_component_query_results).thumbnail('001_ftp1sQ_thumbnail.jpg')
-                    
+
                 else:
                     WidgetBuilder(self.layout_component_query_results).thumbnail('001_ftp1sQ_thumbnail.jpg', column=0)
 
 
     def btn_click_widget_group_query(self):
+        # reset layout
+
         for i in reversed(range(self.layout_component_query_results.count())): 
             self.layout_component_query_results.itemAt(i).widget().setParent(None)
-        self.layout_component_query_results = QtWidgets.QGridLayout()
         self.layout_container.addLayout(self.layout_component_query_results)
 
+        
         all_items = GlanceLib(self.layout_component_query_results).query(self.query_input.text())
         self._widget_group_query_results(items=all_items)
+        QueryResults()._widget_group_query_results(items=all_items)
+
+
+class QueryResults(QtWidgets.QWidget):
+    def __init__(self, parent=None):
+        super(QueryResults, self).__init__()
+
+        grid = QtWidgets.QGridLayout()
+
+        self.widget = QtWidgets.QWidget()
+
+        # set the widget as parent of its own layout
+        self.layout = QtWidgets.QGridLayout(self.widget)
+
+        self._widget_group_query_results(layout=self.layout)
+
+        self.scroll = QtWidgets.QScrollArea()
+        # need this so that scrollarea handles resizing
+        self.scroll.setWidgetResizable(True)
+
+        self.scroll.setWidget(self.widget)
+
+        grid.addWidget(self.scroll, 3, 0)
+        self.setLayout(grid)
+
+
+    def _widget_group_query_results(self, items=None, layout=None, amount=10):
+        if layout == None:
+            layout = self.layout
+        else:
+            layout = self.layout
+
+        if items:
+            count = 0
+            for item in items:
+                if count < amount:
+                    if count % 2 == 0:
+                        WidgetBuilder(layout).thumbnail(item['item_thumb'])
+
+                    else:
+                        WidgetBuilder(layout).thumbnail(item['item_thumb'], column=0)
+                    
+                    count += 1
+
+        else:
+            for index, _ in enumerate(range(8)):
+                if index % 2 == 0:
+                    WidgetBuilder(layout).thumbnail('001_ftp1sQ_thumbnail.jpg')
+
+                else:
+                    WidgetBuilder(layout).thumbnail('001_ftp1sQ_thumbnail.jpg', column=0)
+
+
+    def btn_click_widget_group_query(self):
+        # reset layout
+        """
+        for i in reversed(range(self.layout_component_query_results.count())): 
+            self.layout_component_query_results.itemAt(i).widget().setParent(None)
+        self.layout_container.addLayout(self.layout_component_query_results)
+        """
         
-        
+        all_items = GlanceLib(self.layout_component_query_results).query(self.query_input.text())
+        self._widget_group_query_results(items=all_items)
+        # self._widget_group_query_results(items=all_items)
+
+
 if __name__ == '__main__':
     app = QtWidgets.qApp
     GUI = MainWindow()
