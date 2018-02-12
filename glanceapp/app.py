@@ -15,12 +15,40 @@ from PySide2 import QtGui
 from PySide2 import QtCore
 
 
-class Config():
-    username = ''
-    password = ''
-    entry_point = ''
-    storage_url = ''
+# TODO: needs a more responsive display.
+# scrollarea for query results
+# TODO: each widget returned by query results should
+# have download buttons etc.
+# TODO: figure out how to refactor classes to other modules.
+# importing custom modules seems to be a problem?
 
+class Config():
+    def __init__(self):
+        self.username = 'admin'
+        self.password = 'admin'
+        self.entry_point = 'http://34.236.238.212:5050/glance/v2/items'
+        self.storage_url = 'https://s3.amazonaws.com/vhdevglancestore/'
+    
+    def validate(self):
+        if self.username:
+            return True
+        else:
+            return False
+"""
+
+class Config():
+    def __init__(self):
+        self.username = None
+        self.password = None
+        self.entry_point = None
+        self.storage_url = None
+    
+    def validate(self):
+        if self.username != None:
+            return True
+        else:
+            return False
+"""
 
 class WidgetBuilder():
     def __init__(self, context):
@@ -34,11 +62,17 @@ class WidgetBuilder():
         image = QtGui.QImage()
         image.loadFromData(data)
 
+        thumbnail_widget = QtWidgets.QWidget()
+        
         lbl = QtWidgets.QLabel()
         lbl.setPixmap(QtGui.QPixmap(image))
+        
+        thumbnail_widget.addWidget(lbl)
+        # lbltext = QtWidgets.QLabel()
 
         if column == 0:
-            self.context.addWidget(lbl)
+            self.context.addWidget(thumbnail_widget)
+            self.context
 
         else:
             self.context.addWidget(lbl, 0, 1)
@@ -66,21 +100,46 @@ class GlanceLib():
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
-        self.init_window()
+        if Config().validate():
+            self.init_window()
+        else:
+            self.config_invalid_window()
 
 
     def _window_globals(self):
         self.setWindowTitle('glanceapp 0.01')
-        self.setFixedHeight(600)
         self.setFixedWidth(400)
 
 
-    def init_window(self):
+    def config_invalid_window(self):
+        """config checker window"""
         # Window Components
         self._window_globals()
         self._window_component_menubar()
         widget_root = QtWidgets.QWidget(self)
-        # widget_query_results = QtWidgets.QWidget(self)
+        
+        self.setCentralWidget(widget_root)
+
+        # Layout Components
+        self.layout_container = QtWidgets.QVBoxLayout()
+        self.layout_component_query = QtWidgets.QGridLayout()
+        self.layout_component_query_results = QtWidgets.QGridLayout()
+        
+        self.layout_container.addLayout(self.layout_component_query)
+        self.layout_container.addLayout(self.layout_component_query_results)
+        widget_root.setLayout(self.layout_container)
+        
+        query_input = QtWidgets.QLabel()
+        query_input.setText('Invalid config.')
+        self.layout_component_query_results.addWidget(query_input)
+
+
+    def init_window(self):
+        """First time run window"""
+        # Window Components
+        self._window_globals()
+        self._window_component_menubar()
+        widget_root = QtWidgets.QWidget(self)
         
         self.setCentralWidget(widget_root)
 
@@ -135,7 +194,7 @@ class MainWindow(QtWidgets.QMainWindow):
                         WidgetBuilder(self.layout_component_query_results).thumbnail(item['item_thumb'])
 
                     else:
-                        WidgetBuilder(self.layout_component_query_results).thumbnail(item['item_thumb'], column=1)
+                        WidgetBuilder(self.layout_component_query_results).thumbnail(item['item_thumb'], column=0)
                     
                     count += 1
         
@@ -145,7 +204,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     WidgetBuilder(self.layout_component_query_results).thumbnail('001_ftp1sQ_thumbnail.jpg')
                     
                 else:
-                    WidgetBuilder(self.layout_component_query_results).thumbnail('001_ftp1sQ_thumbnail.jpg', column=1)
+                    WidgetBuilder(self.layout_component_query_results).thumbnail('001_ftp1sQ_thumbnail.jpg', column=0)
 
 
     def btn_click_widget_group_query(self):
