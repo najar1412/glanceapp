@@ -32,6 +32,7 @@ class Config():
     def validate(self):
         if self.username:
             return True
+
         else:
             return False
 
@@ -44,9 +45,10 @@ class GlanceLib():
         request.add_header("Authorization", "Basic {}".format(base64string))
 
         response = json.loads(urllib2.urlopen(request).read())
-        
+
         if 'status' in response and response['status'] == 'success':
             return response['data']
+
         else:
             return []
 
@@ -125,7 +127,7 @@ class MainWindow(QtWidgets.QMainWindow):
         for i in reversed(range(self.layout_component_query_results.count())): 
             self.layout_component_query_results.itemAt(i).widget().setParent(None)
 
-        all_items = GlanceLib().query(self.query_input.text())
+        QueryResults().query_result(query=self.query_input.text())
 
 
 class QueryResults(QtWidgets.QWidget):
@@ -145,23 +147,27 @@ class QueryResults(QtWidgets.QWidget):
         self.setLayout(self.grid)
         
         # content
-        self.query_result(layout=self.layout)
+        self.query_result(layout=self.layout, query='tree')
 
 
-    def query_result(self, items=None, layout=None, amount=3):
+    def query_result(self, items=None, query=None, layout=None, amount=8):
         """processes api results"""
         if layout == None:
             layout = self.layout
 
-        if items:
-            for item in items:
-                Thumbnail(layout, item['item_thumb'])
+        # do query here
+        if query:
+            response = GlanceLib().query(query)
+
+            for item in response:
+                print item
+                # Thumbnail(layout, item['item_thumb'])
 
         else:
             for x in range(amount):
                 Thumbnail(layout, '001_ftp1sQ_thumbnail.jpg')
-                
-                
+
+
         return self.grid
 
 
