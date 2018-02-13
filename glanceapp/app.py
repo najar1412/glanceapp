@@ -36,38 +36,7 @@ class Config():
             return False
 
 
-class WidgetBuilder():
-    def __init__(self, context):
-        self.context = context
-
-
-    def thumbnail(self, image_name, column=0):
-        url = Config().storage_url + image_name
-
-        data = urllib2.urlopen(url).read()
-        image = QtGui.QImage()
-        image.loadFromData(data)
-
-        # thumbnail_widget = QtWidgets.QWidget()
-        
-        lbl = QtWidgets.QLabel()
-        lbl.setPixmap(QtGui.QPixmap(image))
-        
-        self.context.addWidget(lbl)
-
-        if column == 0:
-            self.context.addWidget(lbl)
-            self.context
-
-        else:
-            self.context.addWidget(lbl, 0, 1)
-
-
 class GlanceLib():
-    def __init__(self, context):
-        self.context = context
-
-
     def query(self, string_query):
         build_url_with_params = Config().entry_point + '?'+ 'query=' + string_query
         request = urllib2.Request(build_url_with_params)
@@ -88,7 +57,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if Config().validate():
             self.init_window()
         else:
-            self.config_invalid_window()
+            pass
 
 
     def _window_globals(self):
@@ -96,54 +65,27 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setFixedWidth(450)
 
 
-    def config_invalid_window(self):
-        """config checker window"""
-        # Window Components
-        self._window_globals()
-        self._window_component_menubar()
-        widget_root = QtWidgets.QWidget(self)
-        
-        self.setCentralWidget(widget_root)
-
-        # Layout Components
-        self.layout_container = QtWidgets.QVBoxLayout()
-        self.layout_component_query = QtWidgets.QGridLayout()
-        self.layout_component_query_results = QtWidgets.QGridLayout()
-        
-        self.layout_container.addLayout(self.layout_component_query)
-        self.layout_container.addLayout(self.layout_component_query_results)
-        widget_root.setLayout(self.layout_container)
-        
-        query_input = QtWidgets.QLabel()
-        query_input.setText('Invalid config.')
-        self.layout_component_query_results.addWidget(query_input)
-
-
     def init_window(self):
-        """First time run window"""
-        # Window Components
+        """Init window"""
         self._window_globals()
-        self._window_component_menubar()
         widget_root = QtWidgets.QWidget(self)
-
         self.setCentralWidget(widget_root)
+
+        # Window Components
+        self.ui_comp_menubar()
 
         # Layout Components
         self.layout_container = QtWidgets.QVBoxLayout()
-        self.layout_component_query = QtWidgets.QGridLayout()
         self.layout_component_query_results = QtWidgets.QVBoxLayout()
         self.layout_component_query_results.addWidget(QueryResults())
 
-        self.layout_container.addLayout(self.layout_component_query)
+        self.layout_container.addLayout(self.ui_comp_query())
         self.layout_container.addLayout(self.layout_component_query_results)
         widget_root.setLayout(self.layout_container)
 
-        # layout content
-        self._widget_group_query(self.layout_component_query)
-        # self._widget_group_query_results()
 
-
-    def _window_component_menubar(self):
+    def ui_comp_menubar(self):
+        """Window component - menubar"""
         # menuBar Actions
         extractAction = QtWidgets.QAction("&Login", self)
         extractAction.setShortcut("Ctrl+L")
@@ -162,111 +104,92 @@ class MainWindow(QtWidgets.QMainWindow):
         fileMenu.addAction(menu_item_config)
 
 
-    def _widget_group_query(self, layout):
+    def ui_comp_query(self):
+        """Window component - query box"""
+        layout = QtWidgets.QGridLayout()
+        
         self.query_input = QtWidgets.QLineEdit()
         layout.addWidget(self.query_input, 1, 0)
         
         btn_query = QtWidgets.QPushButton("Search...")
         layout.addWidget(btn_query, 1, 1)
-        btn_query.clicked.connect(self.btn_click_widget_group_query)
+        btn_query.clicked.connect(self.btn_action_query)
 
 
-    def _widget_group_query_results(self, items=None, amount=10):
-        if items:
-            count = 0
-            for item in items:
-                if count < amount:
-                    if count % 2 == 0:
-                        WidgetBuilder(self.layout_component_query_results).thumbnail(item['item_thumb'])
-
-                    else:
-                        WidgetBuilder(self.layout_component_query_results).thumbnail(item['item_thumb'], column=0)
-
-                    count += 1
-
-        else:
-            for index, _ in enumerate(range(8)):
-                if index % 2 == 0:
-                    WidgetBuilder(self.layout_component_query_results).thumbnail('001_ftp1sQ_thumbnail.jpg')
-
-                else:
-                    WidgetBuilder(self.layout_component_query_results).thumbnail('001_ftp1sQ_thumbnail.jpg', column=0)
+        return layout
 
 
-    def btn_click_widget_group_query(self):
+    def btn_action_query(self):
+        """Button Action: Query button"""
         # reset layout
-
         for i in reversed(range(self.layout_component_query_results.count())): 
             self.layout_component_query_results.itemAt(i).widget().setParent(None)
-        self.layout_container.addLayout(self.layout_component_query_results)
 
-        
-        all_items = GlanceLib(self.layout_component_query_results).query(self.query_input.text())
-        self._widget_group_query_results(items=all_items)
-        QueryResults()._widget_group_query_results(items=all_items)
+        all_items = GlanceLib().query(self.query_input.text())
 
 
 class QueryResults(QtWidgets.QWidget):
+    """query result widget"""
     def __init__(self, parent=None):
         super(QueryResults, self).__init__()
 
-        grid = QtWidgets.QGridLayout()
-
+        self.grid = QtWidgets.QGridLayout()
         self.widget = QtWidgets.QWidget()
-
-        # set the widget as parent of its own layout
         self.layout = QtWidgets.QGridLayout(self.widget)
 
-        self._widget_group_query_results(layout=self.layout)
-
+        # scroller
         self.scroll = QtWidgets.QScrollArea()
-        # need this so that scrollarea handles resizing
         self.scroll.setWidgetResizable(True)
-
         self.scroll.setWidget(self.widget)
+        self.grid.addWidget(self.scroll, 3, 0)
+        self.setLayout(self.grid)
+        
+        # content
+        self.query_result(layout=self.layout)
 
-        grid.addWidget(self.scroll, 3, 0)
-        self.setLayout(grid)
 
-
-    def _widget_group_query_results(self, items=None, layout=None, amount=10):
+    def query_result(self, items=None, layout=None, amount=3):
+        """processes api results"""
         if layout == None:
-            layout = self.layout
-        else:
             layout = self.layout
 
         if items:
-            count = 0
             for item in items:
-                if count < amount:
-                    if count % 2 == 0:
-                        WidgetBuilder(layout).thumbnail(item['item_thumb'])
-
-                    else:
-                        WidgetBuilder(layout).thumbnail(item['item_thumb'], column=0)
-                    
-                    count += 1
+                Thumbnail(layout, item['item_thumb'])
 
         else:
-            for index, _ in enumerate(range(8)):
-                if index % 2 == 0:
-                    WidgetBuilder(layout).thumbnail('001_ftp1sQ_thumbnail.jpg')
+            for x in range(amount):
+                Thumbnail(layout, '001_ftp1sQ_thumbnail.jpg')
+                
+                
+        return self.grid
 
-                else:
-                    WidgetBuilder(layout).thumbnail('001_ftp1sQ_thumbnail.jpg', column=0)
+
+class Thumbnail(QtWidgets.QWidget):
+    """thumbnail widget"""
+    def __init__(self, context, image_name):
+        super(Thumbnail, self).__init__()
+        self.context = context
+        self.image_name = image_name
+
+        self.context.addWidget(self.image())
 
 
-    def btn_click_widget_group_query(self):
-        # reset layout
-        """
-        for i in reversed(range(self.layout_component_query_results.count())): 
-            self.layout_component_query_results.itemAt(i).widget().setParent(None)
-        self.layout_container.addLayout(self.layout_component_query_results)
-        """
+    def image(self):
+        url = Config().storage_url + self.image_name
+        data = urllib2.urlopen(url).read()
+
+        image = QtGui.QImage()
+        image.loadFromData(data)
+
+        lbl = QtWidgets.QLabel()
+        lbl.setPixmap(QtGui.QPixmap(image))
         
-        all_items = GlanceLib(self.layout_component_query_results).query(self.query_input.text())
-        self._widget_group_query_results(items=all_items)
-        # self._widget_group_query_results(items=all_items)
+        return lbl
+
+
+    def overlay(self):
+        pass
 
 
 if __name__ == '__main__':
