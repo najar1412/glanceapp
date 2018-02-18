@@ -15,8 +15,7 @@ from PySide2 import QtGui
 from PySide2 import QtCore
 
 
-# TODO: needs a more responsive display.
-# scrollarea for query results
+# TODO: separate 
 # TODO: each widget returned by query results should
 # have download buttons etc.
 # TODO: figure out how to refactor classes to other modules.
@@ -24,10 +23,10 @@ from PySide2 import QtCore
 
 class Config():
     def __init__(self):
-        self.username = None
-        self.password = None
-        self.entry_point = None
-        self.storage_url = None
+        self.username = 'admin'
+        self.password = 'admin'
+        self.entry_point = 'http://34.236.238.212:5050/glance/v2/items'
+        self.storage_url = 'https://s3.amazonaws.com/vhdevglancestore/'
 
     def validate(self):
         if self.username:
@@ -121,13 +120,15 @@ class MainWindow(QtWidgets.QMainWindow):
         return layout
 
 
+    def remove_widgets(self, layout):
+        for i in reversed(range(layout.count())):
+            layout.itemAt(i).widget().setParent(None)
+
     def btn_action_query(self):
         """Button Action: Query button"""
-        # reset layout
-        for i in reversed(range(self.layout_component_query_results.count())): 
-            self.layout_component_query_results.itemAt(i).widget().setParent(None)
-
-        QueryResults().query_result(query=self.query_input.text())
+        self.remove_widgets(self.layout_component_query_results)
+        
+        self.layout_component_query_results.addWidget(QueryResults().query_result(query=self.query_input.text()))
 
 
 class QueryResults(QtWidgets.QWidget):
@@ -145,9 +146,6 @@ class QueryResults(QtWidgets.QWidget):
         self.scroll.setWidget(self.widget)
         self.grid.addWidget(self.scroll, 3, 0)
         self.setLayout(self.grid)
-        
-        # content
-        self.query_result(layout=self.layout, query='tree')
 
 
     def query_result(self, items=None, query=None, layout=None, amount=8):
@@ -160,15 +158,11 @@ class QueryResults(QtWidgets.QWidget):
             response = GlanceLib().query(query)
 
             for item in response:
-                print item
-                # Thumbnail(layout, item['item_thumb'])
-
-        else:
-            for x in range(amount):
-                Thumbnail(layout, '001_ftp1sQ_thumbnail.jpg')
+                # print item
+                Thumbnail(layout, item['item_thumb'])
 
 
-        return self.grid
+        return self
 
 
 class Thumbnail(QtWidgets.QWidget):
@@ -204,4 +198,3 @@ if __name__ == '__main__':
     GUI.show()
 
     sys.exit(app.exec_())
-
