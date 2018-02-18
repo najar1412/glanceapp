@@ -88,33 +88,36 @@ class MainWindow(QtWidgets.QMainWindow):
     def ui_comp_menubar(self):
         """Window component - menubar"""
         # menuBar Actions
-        extractAction = QtWidgets.QAction("&Login", self)
-        extractAction.setShortcut("Ctrl+L")
-        extractAction.setStatusTip('Login')
-        # extractAction.triggered.connect(self.close_application)
+        file_name_settings_action_login = QtWidgets.QAction("&Login", self)
+        file_name_settings_action_login.setShortcut("Ctrl+L")
+        file_name_settings_action_login.setStatusTip('Login')
+        # file_name_settings_action_login.triggered.connect(self.close_application)
 
-        menu_item_config = QtWidgets.QAction("&Config", self)
-        menu_item_config.setStatusTip('Config')
-        # menu_item_config.triggered.connect(self.close_application)
+        file_name_settings_action_config = QtWidgets.QAction("&Config", self)
+        file_name_settings_action_config.setStatusTip('Config')
+        # file_name_settings_action_config.triggered.connect(self.close_application)
 
         self.statusBar()
 
         mainMenu = self.menuBar()
-        fileMenu = mainMenu.addMenu('&Settings')
-        fileMenu.addAction(extractAction)
-        fileMenu.addAction(menu_item_config)
-
+        file_menu_settings = mainMenu.addMenu('&Settings')
+        file_menu_settings.addAction(file_name_settings_action_login)
+        file_menu_settings.addAction(file_name_settings_action_config)
+        
+        file_menu_collections = mainMenu.addMenu('&Collections')
 
     def ui_comp_query(self):
         """Window component - query box"""
         layout = QtWidgets.QGridLayout()
         
         self.query_input = QtWidgets.QLineEdit()
+        self.query_input.returnPressed.connect(self.btn_action_query)
         layout.addWidget(self.query_input, 1, 0)
         
-        btn_query = QtWidgets.QPushButton("Search...")
+        btn_query = QtWidgets.QPushButton("Search")
         layout.addWidget(btn_query, 1, 1)
         btn_query.clicked.connect(self.btn_action_query)
+        btn_query.setAutoDefault(True)
 
 
         return layout
