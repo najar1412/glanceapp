@@ -37,9 +37,9 @@ class Config():
 
 
 class GlanceLib():
-    def query(self, string_query, filter=None):
+    def query(self, string_query=None, filter=None):
         if filter:
-            build_url_with_params = Config().entry_point + '?'+ 'query=' + string_query + '&' + 'filter=' + filter
+            build_url_with_params = Config().entry_point + '?'+ 'filter=' + filter
         else:
             build_url_with_params = Config().entry_point + '?'+ 'query=' + string_query  + '&' + 'filter=geometry'
 
@@ -92,23 +92,29 @@ class MainWindow(QtWidgets.QMainWindow):
     def ui_comp_menubar(self):
         """Window component - menubar"""
         # menuBar Actions
-        file_name_settings_action_login = QtWidgets.QAction("&Login", self)
-        file_name_settings_action_login.setShortcut("Ctrl+L")
-        file_name_settings_action_login.setStatusTip('Login')
-        # file_name_settings_action_login.triggered.connect(self.close_application)
+        file_menu_settings_action_login = QtWidgets.QAction("&Login", self)
+        file_menu_settings_action_login.setShortcut("Ctrl+L")
+        file_menu_settings_action_login.setStatusTip('Login')
+        # file_menu_settings_action_login.triggered.connect(self.close_application)
 
-        file_name_settings_action_config = QtWidgets.QAction("&Config", self)
-        file_name_settings_action_config.setStatusTip('Config')
-        # file_name_settings_action_config.triggered.connect(self.close_application)
+        file_menu_settings_action_config = QtWidgets.QAction("&Config", self)
+        file_menu_settings_action_config.setStatusTip('Config')
+        # file_menu_settings_action_config.triggered.connect(self.close_application)
+        
+        file_menu_collections_action_all = QtWidgets.QAction("&All", self)
+        file_menu_collections_action_all.setStatusTip('Returns all Collections')
+        file_menu_collections_action_all.triggered.connect(self.file_menu_collections_all)
 
         self.statusBar()
 
         mainMenu = self.menuBar()
         file_menu_settings = mainMenu.addMenu('&Settings')
-        file_menu_settings.addAction(file_name_settings_action_login)
-        file_menu_settings.addAction(file_name_settings_action_config)
+        file_menu_settings.addAction(file_menu_settings_action_login)
+        file_menu_settings.addAction(file_menu_settings_action_config)
         
         file_menu_collections = mainMenu.addMenu('&Collections')
+        file_menu_collections.addAction(file_menu_collections_action_all)
+
 
     def ui_comp_query(self):
         """Window component - query box"""
@@ -131,11 +137,19 @@ class MainWindow(QtWidgets.QMainWindow):
         for i in reversed(range(layout.count())):
             layout.itemAt(i).widget().setParent(None)
 
+
     def btn_action_query(self):
         """Button Action: Query button"""
         self.remove_widgets(self.layout_component_query_results)
-        
+
         self.layout_component_query_results.addWidget(QueryResults().query_result(query=self.query_input.text()))
+
+
+    def file_menu_collections_all(self):
+        """Menu Action: Collection: All"""
+        self.remove_widgets(self.layout_component_query_results)
+
+        self.layout_component_query_results.addWidget(QueryResults().query_result(filter='collection'))
 
 
 class QueryResults(QtWidgets.QWidget):
@@ -155,7 +169,7 @@ class QueryResults(QtWidgets.QWidget):
         self.setLayout(self.grid)
 
 
-    def query_result(self, items=None, query=None, layout=None, amount=8):
+    def query_result(self, query=None, layout=None, filter=None):
         """processes api results"""
         if layout == None:
             layout = self.layout
@@ -163,6 +177,13 @@ class QueryResults(QtWidgets.QWidget):
         # do query here
         if query:
             response = GlanceLib().query(query)
+
+            for item in response:
+                # print item
+                Thumbnail(layout, item['item_thumb'])
+        
+        if filter:
+            response = GlanceLib().query(filter=filter)
 
             for item in response:
                 # print item
