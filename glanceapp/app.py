@@ -23,10 +23,10 @@ from PySide2 import QtCore
 
 class Config():
     def __init__(self):
-        self.username = 'admin'
-        self.password = 'admin'
-        self.entry_point = 'http://34.236.238.212:5050/glance/v2/items'
-        self.storage_url = 'https://s3.amazonaws.com/vhdevglancestore/'
+        self.username = None
+        self.password = None
+        self.entry_point = None
+        self.storage_url = None
 
     def validate(self):
         if self.username:
