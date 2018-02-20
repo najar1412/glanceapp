@@ -37,8 +37,12 @@ class Config():
 
 
 class GlanceLib():
-    def query(self, string_query):
-        build_url_with_params = Config().entry_point + '?'+ 'query=' + string_query
+    def query(self, string_query, filter=None):
+        if filter:
+            build_url_with_params = Config().entry_point + '?'+ 'query=' + string_query + '&' + 'filter=' + filter
+        else:
+            build_url_with_params = Config().entry_point + '?'+ 'query=' + string_query  + '&' + 'filter=geometry'
+
         request = urllib2.Request(build_url_with_params)
         base64string = base64.b64encode('{}:{}'.format(Config().username, Config().password))
         request.add_header("Authorization", "Basic {}".format(base64string))
