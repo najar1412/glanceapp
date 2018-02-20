@@ -15,9 +15,6 @@ from PySide2 import QtGui
 from PySide2 import QtCore
 
 
-# TODO: separate 
-# TODO: each widget returned by query results should
-# have download buttons etc.
 # TODO: figure out how to refactor classes to other modules.
 # importing custom modules seems to be a problem?
 
@@ -180,14 +177,14 @@ class QueryResults(QtWidgets.QWidget):
 
             for item in response:
                 # print item
-                Thumbnail(layout, item['item_thumb'])
+                Thumbnail(layout, item)
         
         if filter:
             response = GlanceLib().query(filter=filter)
 
             for item in response:
                 # print item
-                Thumbnail(layout, item['item_thumb'])
+                Thumbnail(layout, item)
 
 
         return self
@@ -195,29 +192,62 @@ class QueryResults(QtWidgets.QWidget):
 
 class Thumbnail(QtWidgets.QWidget):
     """thumbnail widget"""
-    def __init__(self, context, image_name):
+    def __init__(self, context, item_data):
         super(Thumbnail, self).__init__()
         self.context = context
-        self.image_name = image_name
+        self.item_data = item_data
 
         self.context.addWidget(self.image())
 
 
     def image(self):
-        url = Config().storage_url + self.image_name
+        container = QtWidgets.QWidget()
+        container.setFixedSize(200, 200)
+
+        url = Config().storage_url + self.item_data['item_thumb']
+        # print(self.item_data)
         data = urllib2.urlopen(url).read()
 
         image = QtGui.QImage()
         image.loadFromData(data)
-
-        lbl = QtWidgets.QLabel()
-        lbl.setPixmap(QtGui.QPixmap(image))
         
-        return lbl
+        if self.item_data['item_type'] == 'collection':
+            painter = QtGui.QPainter()
+            painter.begin(image)
+            painter.fillRect(0, 0, 200, 40, QtGui.QColor(0, 0, 0, 160))
+            painter.end()
+
+            lbl = QtWidgets.QLabel()
+            lbl.setPixmap(QtGui.QPixmap(image))
+            
+            lbl.setParent(container)
+            
+            phoneLabel = QtWidgets.QLabel(self.item_data['name'], self)
+            phoneLabel.setMargin(5)
+            phoneLabel.setWordWrap(True)
+            phoneLabel.setParent(container)
+            
+        else:
+            painter = QtGui.QPainter()
+            painter.begin(image)
+            painter.fillRect(0, 175, 200, 25, QtGui.QColor(0, 0, 0, 160))
+            painter.end()
+
+            lbl = QtWidgets.QLabel()
+            lbl.setPixmap(QtGui.QPixmap(image))
+            
+            lbl.setParent(container)
+            
+            
+            phoneLabel = QtWidgets.QLabel('Import | Proxy', self)
+            phoneLabel.move(0, 175)
+            phoneLabel.setMargin(5)
+            # phoneLabel.setWordWrap(True)
+            phoneLabel.setParent(container)
 
 
-    def overlay(self):
-        pass
+        return container
+
 
 
 if __name__ == '__main__':
